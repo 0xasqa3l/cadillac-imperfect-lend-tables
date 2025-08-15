@@ -1,0 +1,33 @@
+name: Unscheduled File Addition
+
+on:
+  schedule:
+    - cron: '37 6 */2 * *'
+  workflow_dispatch: 
+
+jobs:
+  random-file-add:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create a  file
+        run: |
+          RAND=$(openssl rand -hex 4)
+          FILE="misc_${RAND}.txt"
+          # File content can vary as well
+          echo "Generated data: ${RAND}" > "$FILE"
+
+      - name: Randomize commit message
+        id: random_commit
+        run: |
+          MESSAGES=("Update misc files" "Minor change" "Misc tweaks" "Adjustments" "Small update" "Routine sync" "Various changes" "File update")
+          SELECTED=${MESSAGES[$RANDOM % ${#MESSAGES[@]}]}
+          echo "message=$SELECTED" >> $GITHUB_OUTPUT
+
+      - name: Commit and push
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.PAT }}
+          commit_message: ${{ steps.random_commit.outputs.message }}
