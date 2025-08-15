@@ -9,25 +9,23 @@ jobs:
   random-file-add:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Create a  file
+      - name: Create and commit file
         run: |
           RAND=$(openssl rand -hex 4)
           FILE="misc_${RAND}.txt"
-          # File content can vary as well
           echo "Generated data: ${RAND}" > "$FILE"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
 
-      - name: Randomize commit message
-        id: random_commit
+          git add "$FILE"
+          git commit -m "file commit"
+
+      - name: Push via PAT
+        env:
+          GH_PAT: ${{ secrets.PAT }}
         run: |
-          MESSAGES=("Update misc files" "Minor change" "Misc tweaks" "Adjustments" "Small update" "Routine sync" "Various changes" "File update")
-          SELECTED=${MESSAGES[$RANDOM % ${#MESSAGES[@]}]}
-          echo "message=$SELECTED" >> $GITHUB_OUTPUT
-
-      - name: Commit and push
-        uses: ad-m/github-push-action@v0.8.0
-        with:
-          github_token: ${{ secrets.PAT }}
-          commit_message: "testing"
+          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
+          git push origin HEAD:${{ github.ref_name }}
